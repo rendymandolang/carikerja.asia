@@ -35,8 +35,8 @@ class WaitlistController extends Controller
         Waitlist::create($validated);
 
         $message = $validated['type'] === 'candidate'
-            ? 'Terima kasih. Anda sudah masuk daftar tunggu pencari kerja carikerja.asia.'
-            : 'Terima kasih. Perusahaan Anda sudah masuk daftar tunggu recruiter carikerja.asia.';
+            ? 'Terima kasih. Profil minat kerja Anda sudah kami terima.'
+            : 'Terima kasih. Permintaan kerja sama rekrutmen perusahaan Anda sudah kami terima.';
 
         return back()->with('success', $message);
     }

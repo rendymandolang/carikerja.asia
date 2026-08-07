@@ -249,6 +249,18 @@
             margin-bottom: 34px;
         }
 
+        .entry-actions {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin: 0 0 24px;
+        }
+
+        .entry-actions .landing-button {
+            min-height: 48px;
+            text-align: center;
+        }
+
         .signal-row {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -500,6 +512,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .entry-actions {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
             .hero-band::before {
                 right: -280px;
                 bottom: 34px;
@@ -546,6 +562,10 @@
                 font-size: 17px;
             }
 
+            .entry-actions {
+                grid-template-columns: 1fr;
+            }
+
             .section {
                 padding: 44px 0;
             }
@@ -571,7 +591,7 @@
             <a href="{{ route('jobs.index') }}" class="landing-link">Lowongan</a>
             <a href="{{ route('candidate.login') }}" class="landing-link">Kandidat</a>
             <a href="{{ route('recruiter.login') }}" class="landing-link">Recruiter</a>
-            <a href="#waitlist" class="landing-button primary">Daftar</a>
+            <a href="#mulai" class="landing-button primary">Mulai</a>
         </nav>
     </div>
 </header>
@@ -596,14 +616,14 @@
 
             <div class="hero-inner">
                 <div class="eyebrow">Hiring lebih jelas, dari apply sampai interview</div>
-                <h1 class="hero-title">carikerja<span>.asia</span></h1>
+                <h1 class="hero-title">Cari kerja <span>tanpa digantung.</span></h1>
                 <p class="hero-copy">
-                    Platform kerja untuk kandidat dan recruiter yang ingin proses lamaran lebih transparan, rapi, dan tidak menggantung.
+                    Temukan lowongan dengan proses yang lebih transparan. Kandidat dapat memantau perkembangan lamaran, sementara recruiter mengelola hiring dalam satu alur yang rapi.
                 </p>
 
                 <div class="hero-actions">
-                    <a href="{{ route('jobs.index') }}" class="landing-button primary">Lihat Lowongan</a>
-                    <a href="#waitlist" class="landing-button">Masuk Waitlist</a>
+                    <a href="{{ route('jobs.index') }}" class="landing-button primary">Cari Lowongan</a>
+                    <a href="#candidate-start" class="landing-button">Buat Profil Kandidat</a>
                 </div>
 
                 <div class="signal-row" aria-label="Keunggulan carikerja.asia">
@@ -636,7 +656,7 @@
                 <div class="feature-card">
                     <mark>Kandidat</mark>
                     <strong>Portal kandidat</strong>
-                    <p>Login email atau Gmail, resume center, status lamaran, jadwal interview, dan notifikasi.</p>
+                    <p>Login email, resume center, status lamaran, jadwal interview, dan notifikasi.</p>
                 </div>
                 <div class="feature-card">
                     <mark>Recruiter</mark>
@@ -652,18 +672,25 @@
         </div>
     </section>
 
-    <section id="waitlist" class="section">
+    <section id="mulai" class="section">
         <div class="landing-container">
-            <p class="section-kicker">Early access</p>
-            <h2 class="section-heading">Masuk daftar tunggu</h2>
+            <p class="section-kicker">Mulai sekarang</p>
+            <h2 class="section-heading">Cari peluang atau bangun tim bersama carikerja.asia.</h2>
             <p class="section-desc">
-                Pilih jalur yang sesuai. Data ini membantu kami membuka akses kandidat dan perusahaan secara bertahap.
+                Kandidat dapat mencari lowongan dan membangun profil awal. Recruiter serta perusahaan dapat mengajukan kerja sama untuk memasang lowongan dan mengelola proses hiring.
             </p>
 
+            <div class="entry-actions" aria-label="Pilihan utama carikerja.asia">
+                <a href="{{ route('jobs.index') }}" class="landing-button primary">Cari Lowongan</a>
+                <a href="#candidate-start" class="landing-button">Buat Profil Kandidat</a>
+                <a href="#company-start" class="landing-button">Pasang Lowongan</a>
+                <a href="{{ route('recruiter.login') }}" class="landing-button">Masuk sebagai Recruiter</a>
+            </div>
+
             <div class="waitlist-grid">
-                <div class="signup-panel">
-                    <h2>Saya pencari kerja</h2>
-                    <p>Dapatkan akses awal ke lowongan, status lamaran, dan candidate portal.</p>
+                <div class="signup-panel" id="candidate-start">
+                    <h2>Buat profil kandidat</h2>
+                    <p>Daftarkan minat kerja Anda agar kami dapat menghubungkan profil dengan lowongan yang relevan.</p>
 
                     <form method="POST" action="{{ route('waitlist.store') }}" class="field-grid">
                         @csrf
@@ -674,13 +701,13 @@
                         <input type="text" name="linkedin_url" class="landing-input" placeholder="LinkedIn profile URL" value="{{ old('linkedin_url') }}" required>
                         <input type="text" name="target_role" class="landing-input" placeholder="Posisi yang dicari" value="{{ old('target_role') }}">
 
-                        <button type="submit" class="form-submit primary">Daftar sebagai kandidat</button>
+                        <button type="submit" class="form-submit primary">Kirim profil kandidat</button>
                     </form>
                 </div>
 
-                <div class="signup-panel">
-                    <h2>Saya recruiter / perusahaan</h2>
-                    <p>Coba pasang lowongan dan kelola proses hiring dari dashboard recruiter.</p>
+                <div class="signup-panel" id="company-start">
+                    <h2>Kerja sama recruiter / perusahaan</h2>
+                    <p>Ajukan kerja sama untuk memasang lowongan dan mengelola proses hiring melalui carikerja.asia.</p>
 
                     <form method="POST" action="{{ route('waitlist.store') }}" class="field-grid">
                         @csrf
@@ -692,7 +719,7 @@
                         <input type="text" name="position" class="landing-input" placeholder="Jabatan Anda" value="{{ old('position') }}">
                         <textarea name="notes" class="landing-textarea" placeholder="Kebutuhan awal">{{ old('notes') }}</textarea>
 
-                        <button type="submit" class="form-submit">Daftar sebagai recruiter</button>
+                        <button type="submit" class="form-submit">Ajukan kerja sama</button>
                     </form>
                 </div>
             </div>
