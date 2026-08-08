@@ -21,6 +21,7 @@ use App\Http\Controllers\Candidate\CandidateInterviewController;
 use App\Http\Controllers\Candidate\CandidatePortalController;
 use App\Http\Controllers\Candidate\CandidateProfileController;
 use App\Http\Controllers\EmailUnsubscribeController;
+use App\Http\Controllers\Frontend\CompanyController;
 use App\Http\Controllers\Frontend\JobApplicationController;
 use App\Http\Controllers\Frontend\JobBoardController;
 use App\Http\Controllers\Frontend\JobReportController;
@@ -45,10 +46,14 @@ Route::get('/cookie-policy', [LegalPageController::class, 'cookies'])->name('leg
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::get('/jobs', [JobBoardController::class, 'index'])->name('jobs.index');
+Route::get('/jobs/city/{citySlug}', [JobBoardController::class, 'city'])->name('jobs.city');
+Route::get('/jobs/category/{employmentType}', [JobBoardController::class, 'category'])->name('jobs.category');
 Route::get('/jobs/{jobPost:slug}/apply', [JobApplicationController::class, 'create'])->name('jobs.apply.create');
 Route::post('/jobs/{jobPost:slug}/apply', [JobApplicationController::class, 'store'])->name('jobs.apply.store');
 Route::post('/jobs/{jobPost:slug}/report', [JobReportController::class, 'store'])->middleware('throttle:5,60')->name('jobs.report');
 Route::get('/jobs/{jobPost:slug}', [JobBoardController::class, 'show'])->name('jobs.show');
+Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
+Route::get('/companies/{company:slug}', [CompanyController::class, 'show'])->name('companies.show');
 
 Route::prefix('candidate')->group(function () {
     Route::get('/login', [CandidateAuthController::class, 'showLogin'])->name('candidate.login');

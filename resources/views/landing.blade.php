@@ -36,6 +36,9 @@
     <meta name="description" content="{{ $metaDescription }}">
     <meta name="keywords" content="{{ config('seo.keywords') }}">
     <meta name="robots" content="index,follow">
+    @if (config('seo.google_site_verification'))
+        <meta name="google-site-verification" content="{{ config('seo.google_site_verification') }}">
+    @endif
     <link rel="canonical" href="{{ $canonicalUrl }}">
     <meta property="og:site_name" content="{{ config('seo.site_name') }}">
     <meta property="og:type" content="website">

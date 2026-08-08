@@ -7,6 +7,7 @@ return [
     'keywords' => env('SEO_KEYWORDS', 'lowongan kerja, cari kerja, job portal, ATS, recruiter, kandidat, Indonesia'),
     'image' => env('SEO_IMAGE', 'images/carikerja-logo.png'),
     'contact_email' => env('SEO_CONTACT_EMAIL', 'hello@carikerja.asia'),
+    'google_site_verification' => env('GOOGLE_SITE_VERIFICATION'),
     'legal_name' => env('LEGAL_PLATFORM_NAME', 'carikerja.asia'),
     'legal_effective_date' => env('LEGAL_EFFECTIVE_DATE', '2026-07-02'),
 ];
