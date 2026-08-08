@@ -30,6 +30,7 @@ class SystemHealthService
             'settings' => $this->settings(),
             'queueMetrics' => $this->queueMetrics(),
             'mailReadiness' => app(MailServerReadinessService::class)->snapshot(),
+            'googleReadiness' => app(GoogleIntegrationReadinessService::class)->snapshot(),
             'backupRuns' => Schema::hasTable('backup_runs')
                 ? BackupRun::with('triggeredBy')->latest()->limit(8)->get()
                 : collect(),

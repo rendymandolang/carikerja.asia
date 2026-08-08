@@ -166,6 +166,30 @@
     </div>
 
     <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card table-card">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                    <strong>Google OAuth Readiness</strong>
+                    <span class="badge {{ $googleReadiness['ready'] ? 'bg-success' : 'bg-warning text-dark' }}">{{ $googleReadiness['ready'] ? 'ready' : 'configuration needed' }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Rahasia OAuth hanya dibaca dari <code>.env</code> server dan tidak pernah ditampilkan atau disimpan melalui formulir admin.</p>
+                    <div class="row g-3">
+                        @foreach ($googleReadiness['checks'] as $check)
+                            <div class="col-md-6"><div class="border rounded p-3 d-flex justify-content-between gap-3"><div><div class="fw-semibold">{{ $check['label'] }}</div><code class="small">{{ $check['environmentKey'] }}</code></div><span class="badge {{ $check['configured'] ? 'bg-success' : 'bg-secondary' }} align-self-start">{{ $check['configured'] ? 'configured' : 'missing' }}</span></div></div>
+                        @endforeach
+                    </div>
+                    <hr>
+                    <div class="small"><strong>Authorized origin:</strong> <code>{{ $googleReadiness['authorized_origin'] }}</code></div>
+                    <div class="small"><strong>Candidate redirect:</strong> <code>{{ $googleReadiness['candidate_redirect'] }}</code></div>
+                    <div class="small"><strong>Calendar redirect:</strong> <code>{{ $googleReadiness['workspace_redirect'] }}</code></div>
+                    <div class="small mt-2"><strong>Search Console verification:</strong> <span class="badge {{ $googleReadiness['site_verification_configured'] ? 'bg-success' : 'bg-secondary' }}">{{ $googleReadiness['site_verification_configured'] ? 'configured' : 'optional / missing' }}</span> <code>GOOGLE_SITE_VERIFICATION</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
         <div class="col-lg-4">
             <div class="card table-card h-100">
                 <div class="card-header bg-white">

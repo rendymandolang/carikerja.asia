@@ -5,7 +5,7 @@
         $pageTitle = trim($__env->yieldContent('title', config('seo.title')));
         $metaDescription = trim($__env->yieldContent('meta_description', config('seo.description')));
         $canonicalUrl = trim($__env->yieldContent('canonical', url()->current()));
-        $metaRobots = trim($__env->yieldContent('meta_robots', 'index,follow'));
+        $metaRobots = trim($__env->yieldContent('meta_robots', request()->attributes->get('seo_robots', 'index,follow')));
         $ogImage = trim($__env->yieldContent('og_image', asset(config('seo.image'))));
     @endphp
     <meta charset="UTF-8">
@@ -14,6 +14,9 @@
     <meta name="description" content="{{ $metaDescription }}">
     <meta name="keywords" content="{{ config('seo.keywords') }}">
     <meta name="robots" content="{{ $metaRobots }}">
+    @if (config('seo.google_site_verification'))
+        <meta name="google-site-verification" content="{{ config('seo.google_site_verification') }}">
+    @endif
     <link rel="canonical" href="{{ $canonicalUrl }}">
     <meta property="og:site_name" content="{{ config('seo.site_name') }}">
     <meta property="og:type" content="@yield('og_type', 'website')">
@@ -135,6 +138,7 @@
 
         <div class="d-flex gap-2">
             <a href="{{ route('jobs.index') }}" class="btn btn-outline-primary btn-sm">Lowongan</a>
+            <a href="{{ route('companies.index') }}" class="btn btn-outline-primary btn-sm">Perusahaan</a>
             <a href="{{ route('landing') }}#waitlist" class="btn btn-primary btn-sm">Daftar</a>
         </div>
     </div>

@@ -7,54 +7,7 @@
 
 @section('head')
     @php
-        $employmentTypeMap = [
-            'full_time' => 'FULL_TIME',
-            'part_time' => 'PART_TIME',
-            'contract' => 'CONTRACTOR',
-            'internship' => 'INTERN',
-            'freelance' => 'CONTRACTOR',
-        ];
-
-        $jobPosting = [
-            '@context' => 'https://schema.org',
-            '@type' => 'JobPosting',
-            'title' => $job->title,
-            'description' => strip_tags($job->description),
-            'datePosted' => $job->published_at?->toDateString(),
-            'employmentType' => $employmentTypeMap[$job->employment_type] ?? 'FULL_TIME',
-            'hiringOrganization' => [
-                '@type' => 'Organization',
-                'name' => $job->company?->company_name ?: 'Company confidential',
-                'sameAs' => $job->company?->website,
-            ],
-            'jobLocation' => [
-                '@type' => 'Place',
-                'address' => [
-                    '@type' => 'PostalAddress',
-                    'addressLocality' => $job->city ?: $job->location,
-                    'addressRegion' => $job->province,
-                    'addressCountry' => $job->country ?: 'Indonesia',
-                ],
-            ],
-            'url' => route('jobs.show', $job),
-        ];
-
-        if ($job->application_deadline) {
-            $jobPosting['validThrough'] = $job->application_deadline->endOfDay()->toAtomString();
-        }
-
-        if ($job->salary_min || $job->salary_max) {
-            $jobPosting['baseSalary'] = [
-                '@type' => 'MonetaryAmount',
-                'currency' => $job->currency ?: 'IDR',
-                'value' => [
-                    '@type' => 'QuantitativeValue',
-                    'minValue' => $job->salary_min ? (float) $job->salary_min : null,
-                    'maxValue' => $job->salary_max ? (float) $job->salary_max : null,
-                    'unitText' => 'MONTH',
-                ],
-            ];
-        }
+        $jobPosting = app(\App\Services\JobPostingSchemaService::class)->for($job);
     @endphp
 
     <script type="application/ld+json">
@@ -139,6 +92,9 @@
                     <div class="mb-3">
                         <div class="text-muted small">Company</div>
                         <div class="fw-bold">{{ $job->company?->company_name ?: '-' }}</div>
+                        @if ($job->company)
+                            <a href="{{ route('companies.show', $job->company) }}" class="small">Lihat profil perusahaan</a>
+                        @endif
                         @if ($job->company?->response_sample_size)
                             <div class="small text-muted">Response rate {{ number_format((float) $job->company->response_rate, 0) }}% | median {{ number_format((float) $job->company->median_response_hours, 1) }} jam</div>
                         @endif

@@ -73,10 +73,23 @@ class JobPost extends Model
 
     public function scopeOpenForApplication(Builder $query): Builder
     {
-        return $query->where(function ($q) {
-            $q->whereNull('application_deadline')
-                ->orWhereDate('application_deadline', '>=', now()->toDateString());
-        });
+        return $query
+            ->where(function ($q) {
+                $q->whereNull('application_deadline')
+                    ->orWhereDate('application_deadline', '>=', now()->toDateString());
+            })
+            ->where(function ($q) {
+                $q->whereNull('confirmation_due_at')
+                    ->orWhere('confirmation_due_at', '>=', now());
+            });
+    }
+
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query
+            ->published()
+            ->openForApplication()
+            ->whereHas('company', fn (Builder $company) => $company->where('status', 'active'));
     }
 
     public function isPublished(): bool

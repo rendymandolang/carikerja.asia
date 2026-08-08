@@ -1,8 +1,8 @@
 @extends('frontend.layouts.app')
 
-@section('title', 'Lowongan Kerja - carikerja.asia')
-@section('meta_description', 'Temukan lowongan kerja transparan dari perusahaan yang terverifikasi di carikerja.asia.')
-@section('canonical', route('jobs.index'))
+@section('title', $seoTitle)
+@section('meta_description', $seoDescription)
+@section('canonical', $canonicalUrl)
 
 @section('content')
 <section class="hero py-5 mb-5">
@@ -10,10 +10,8 @@
         <div class="row align-items-center g-4">
             <div class="col-lg-8">
                 <span class="pill mb-3">Transparent Job Board</span>
-                <h1 class="display-5 fw-bold mb-3">Cari kerja tanpa digantung.</h1>
-                <p class="lead mb-0 text-white-50">
-                    Temukan lowongan yang statusnya jelas, prosesnya lebih transparan, dan perusahaan lebih accountable.
-                </p>
+                <h1 class="display-5 fw-bold mb-3">{{ $heading }}</h1>
+                <p class="lead mb-0 text-white-50">{{ $intro }}</p>
             </div>
 
             <div class="col-lg-4">
@@ -159,5 +157,17 @@
     <div class="mt-4">
         {{ $jobs->links() }}
     </div>
+
+    <section class="mt-5" aria-labelledby="browse-links">
+        <h2 id="browse-links" class="h4">Jelajahi lowongan</h2>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            @foreach ($cities as $city)
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('jobs.city', \Illuminate\Support\Str::slug($city)) }}">{{ $city }}</a>
+            @endforeach
+            @foreach (['full_time' => 'Full Time', 'part_time' => 'Part Time', 'contract' => 'Kontrak', 'internship' => 'Magang', 'freelance' => 'Freelance'] as $type => $label)
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('jobs.category', $type) }}">{{ $label }}</a>
+            @endforeach
+        </div>
+    </section>
 </main>
 @endsection

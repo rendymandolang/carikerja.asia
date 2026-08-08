@@ -171,8 +171,8 @@ class JobApplicationController extends Controller
 
     private function ensureJobIsOpen(JobPost $jobPost): void
     {
-        abort_if(! $jobPost->isPublished(), 404);
-        abort_if(! $jobPost->isOpenForApplication(), 404);
+        $jobPost->loadMissing('company');
+        abort_if(! $jobPost->isPublished() || ! $jobPost->isOpenForApplication() || $jobPost->company?->status !== 'active', 410);
     }
 
     private function resolveCandidateUser(string $email, array $validated): User
