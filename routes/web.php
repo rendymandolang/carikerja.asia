@@ -1,15 +1,16 @@
 <?php
 
 use App\Http\Controllers\AccountSecurityController;
-use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminApplicationController;
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminCompanyController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminEmailCenterController;
 use App\Http\Controllers\Admin\AdminEmailTemplateController;
-use App\Http\Controllers\Admin\AdminRecruiterController;
 use App\Http\Controllers\Admin\AdminJobPostController;
+use App\Http\Controllers\Admin\AdminJobReportController;
 use App\Http\Controllers\Admin\AdminMarketingCampaignController;
+use App\Http\Controllers\Admin\AdminRecruiterController;
 use App\Http\Controllers\Admin\AdminSystemController;
 use App\Http\Controllers\Admin\AdminWaitlistController;
 use App\Http\Controllers\Auth\PortalPasswordResetController;
@@ -17,11 +18,12 @@ use App\Http\Controllers\Candidate\ApplicationMessageController as CandidateAppl
 use App\Http\Controllers\Candidate\CandidateAuthController;
 use App\Http\Controllers\Candidate\CandidateGoogleAuthController;
 use App\Http\Controllers\Candidate\CandidateInterviewController;
-use App\Http\Controllers\Candidate\CandidateProfileController;
 use App\Http\Controllers\Candidate\CandidatePortalController;
+use App\Http\Controllers\Candidate\CandidateProfileController;
 use App\Http\Controllers\EmailUnsubscribeController;
-use App\Http\Controllers\Frontend\JobBoardController;
 use App\Http\Controllers\Frontend\JobApplicationController;
+use App\Http\Controllers\Frontend\JobBoardController;
+use App\Http\Controllers\Frontend\JobReportController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\Recruiter\ApplicationInterviewController;
 use App\Http\Controllers\Recruiter\ApplicationMessageController as RecruiterApplicationMessageController;
@@ -45,6 +47,7 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/jobs', [JobBoardController::class, 'index'])->name('jobs.index');
 Route::get('/jobs/{jobPost:slug}/apply', [JobApplicationController::class, 'create'])->name('jobs.apply.create');
 Route::post('/jobs/{jobPost:slug}/apply', [JobApplicationController::class, 'store'])->name('jobs.apply.store');
+Route::post('/jobs/{jobPost:slug}/report', [JobReportController::class, 'store'])->middleware('throttle:5,60')->name('jobs.report');
 Route::get('/jobs/{jobPost:slug}', [JobBoardController::class, 'show'])->name('jobs.show');
 
 Route::prefix('candidate')->group(function () {
@@ -112,6 +115,7 @@ Route::prefix('recruiter')->group(function () {
         Route::get('/jobs/{jobPost}', [RecruiterPortalController::class, 'showJob'])->name('recruiter.jobs.show');
         Route::get('/jobs/{jobPost}/edit', [RecruiterPortalController::class, 'editJob'])->name('recruiter.jobs.edit');
         Route::put('/jobs/{jobPost}', [RecruiterPortalController::class, 'updateJob'])->name('recruiter.jobs.update');
+        Route::post('/jobs/{jobPost}/confirm', [RecruiterPortalController::class, 'confirmJob'])->name('recruiter.jobs.confirm');
 
         Route::get('/applications', [RecruiterPortalController::class, 'applications'])->name('recruiter.applications.index');
         Route::get('/applications/{application}', [RecruiterPortalController::class, 'showApplication'])->name('recruiter.applications.show');
@@ -162,6 +166,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/jobs/{jobPost}', [AdminJobPostController::class, 'show'])->name('admin.jobs.show');
         Route::get('/jobs/{jobPost}/edit', [AdminJobPostController::class, 'edit'])->name('admin.jobs.edit');
         Route::put('/jobs/{jobPost}', [AdminJobPostController::class, 'update'])->name('admin.jobs.update');
+        Route::patch('/job-reports/{jobReport}', [AdminJobReportController::class, 'update'])->name('admin.job-reports.update');
 
         Route::get('/applications', [AdminApplicationController::class, 'index'])->name('admin.applications.index');
         Route::get('/applications/{application}', [AdminApplicationController::class, 'show'])->name('admin.applications.show');

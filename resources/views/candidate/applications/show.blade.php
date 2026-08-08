@@ -39,6 +39,22 @@
 
                     <dt class="col-sm-4">Last Status Change</dt>
                     <dd class="col-sm-8">{{ $application->last_status_changed_at ? $application->last_status_changed_at->format('d M Y H:i') : '-' }}</dd>
+
+                    <dt class="col-sm-4">Janji Respons Pertama</dt>
+                    <dd class="col-sm-8">
+                        @if ($application->first_responded_at)
+                            Direspons pada {{ $application->first_responded_at->format('d M Y H:i') }}
+                        @elseif ($application->isResponseOverdue())
+                            <span class="text-danger fw-bold">Melewati batas {{ $application->response_due_at->format('d M Y H:i') }} — admin ikut memantau.</span>
+                        @else
+                            Maksimal {{ $application->response_due_at?->format('d M Y H:i') ?: '-' }}
+                        @endif
+                    </dd>
+
+                    @if ($application->isFinalized())
+                        <dt class="col-sm-4">Hasil Akhir</dt>
+                        <dd class="col-sm-8"><span class="badge bg-primary">{{ $application->resolutionLabel() }}</span><div class="mt-2">{{ $application->final_reason }}</div></dd>
+                    @endif
                 </dl>
 
                 @if ($application->cover_letter)

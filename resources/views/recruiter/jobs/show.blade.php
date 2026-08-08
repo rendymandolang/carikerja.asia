@@ -10,6 +10,11 @@
                 <strong>{{ $job->title }}</strong>
                 <div class="d-flex gap-2 align-items-center">
                     <span class="badge bg-primary">{{ ucfirst(str_replace('_', ' ', $job->status)) }}</span>
+                    @if ($job->status === 'published' || ($job->status === 'closed' && $job->closure_type === 'inactive'))
+                        <form method="POST" action="{{ route('recruiter.jobs.confirm', $job) }}">@csrf
+                            <button class="btn btn-sm btn-success">Konfirmasi Masih Aktif</button>
+                        </form>
+                    @endif
                     <a href="{{ route('recruiter.jobs.edit', $job) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
                 </div>
             </div>
@@ -36,6 +41,13 @@
 
                     <dt class="col-sm-4">Deadline</dt>
                     <dd class="col-sm-8">{{ $job->application_deadline ? $job->application_deadline->format('d M Y') : 'Open until filled' }}</dd>
+
+                    <dt class="col-sm-4">Wajib Dikonfirmasi</dt>
+                    <dd class="col-sm-8"><span class="badge bg-{{ $job->isConfirmationOverdue() ? 'danger' : 'info' }}">{{ $job->confirmation_due_at?->format('d M Y H:i') ?: 'Saat dipublikasikan' }}</span></dd>
+
+                    @if ($job->closed_reason)
+                        <dt class="col-sm-4">Alasan Ditutup</dt><dd class="col-sm-8">{{ $job->closed_reason }}</dd>
+                    @endif
                 </dl>
 
                 <hr>

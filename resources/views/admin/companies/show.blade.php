@@ -18,6 +18,7 @@
         <div class="card table-card">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <strong>{{ $company->company_name }}</strong>
+                <div>@if($company->is_verified)<span class="badge bg-success">Perusahaan terverifikasi</span>@endif @if($company->isActiveResponder())<span class="badge bg-info text-dark">Aktif merespons</span>@endif</div>
                 <a href="{{ route('admin.companies.edit', $company) }}" class="btn btn-sm btn-primary">Edit Company</a>
             </div>
 
@@ -25,6 +26,9 @@
                 <dl class="row">
                     <dt class="col-sm-4">Company Name</dt>
                     <dd class="col-sm-8">{{ $company->company_name }}</dd>
+
+                    <dt class="col-sm-4">Kinerja Respons</dt>
+                    <dd class="col-sm-8">{{ $company->response_sample_size ? number_format((float)$company->response_rate, 0).'% dari '.$company->response_sample_size.' lamaran' : 'Belum ada data' }}<div class="text-muted small">Median {{ $company->median_response_hours !== null ? number_format((float)$company->median_response_hours, 1).' jam' : '-' }}</div></dd>
 
                     <dt class="col-sm-4">Legal Name</dt>
                     <dd class="col-sm-8">{{ $company->legal_name ?: '-' }}</dd>

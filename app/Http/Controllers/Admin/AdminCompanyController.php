@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -50,6 +51,10 @@ class AdminCompanyController extends Controller
     {
         $validated = $this->validateCompany($request);
 
+        $validated['is_verified'] = $request->boolean('is_verified');
+        $validated['verified_at'] = $validated['is_verified'] ? now() : null;
+        $validated['verified_by_user_id'] = $validated['is_verified'] ? Auth::id() : null;
+
         $validated['slug'] = $this->generateUniqueSlug($validated['company_name']);
 
         $company = Company::create($validated);
@@ -72,6 +77,9 @@ class AdminCompanyController extends Controller
     public function update(Request $request, Company $company)
     {
         $validated = $this->validateCompany($request);
+        $validated['is_verified'] = $request->boolean('is_verified');
+        $validated['verified_at'] = $validated['is_verified'] ? ($company->verified_at ?: now()) : null;
+        $validated['verified_by_user_id'] = $validated['is_verified'] ? Auth::id() : null;
 
         if ($company->company_name !== $validated['company_name']) {
             $validated['slug'] = $this->generateUniqueSlug($validated['company_name'], $company->id);
@@ -98,6 +106,7 @@ class AdminCompanyController extends Controller
             'province' => ['nullable', 'string', 'max:100'],
             'status' => ['required', Rule::in(['pending', 'active', 'suspended', 'rejected'])],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'is_verified' => ['nullable', 'boolean'],
         ]);
     }
 
@@ -112,7 +121,7 @@ class AdminCompanyController extends Controller
                 ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

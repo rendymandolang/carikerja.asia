@@ -21,6 +21,17 @@ class Application extends Model
         'withdrawn',
     ];
 
+    public const RESOLUTIONS = ['hired', 'rejected', 'position_closed', 'position_cancelled', 'withdrawn'];
+
+    public const TRANSITIONS = [
+        'submitted' => ['screening', 'rejected', 'withdrawn'],
+        'screening' => ['shortlisted', 'interview', 'rejected', 'withdrawn'],
+        'shortlisted' => ['interview', 'offer', 'rejected', 'withdrawn'],
+        'interview' => ['offer', 'rejected', 'withdrawn'],
+        'offer' => ['hired', 'rejected', 'withdrawn'],
+        'hired' => [], 'rejected' => [], 'withdrawn' => [],
+    ];
+
     protected $fillable = [
         'candidate_profile_id',
         'job_post_id',
@@ -37,6 +48,8 @@ class Application extends Model
         'last_status_changed_at',
         'reviewed_at',
         'reviewed_by_user_id',
+        'response_due_at', 'first_responded_at', 'pre_due_reminder_sent_at',
+        'overdue_reminder_sent_at', 'finalized_at', 'resolution', 'final_reason',
     ];
 
     protected $casts = [
@@ -44,6 +57,11 @@ class Application extends Model
         'applied_at' => 'datetime',
         'last_status_changed_at' => 'datetime',
         'reviewed_at' => 'datetime',
+        'response_due_at' => 'datetime',
+        'first_responded_at' => 'datetime',
+        'pre_due_reminder_sent_at' => 'datetime',
+        'overdue_reminder_sent_at' => 'datetime',
+        'finalized_at' => 'datetime',
     ];
 
     public function candidateProfile()
@@ -110,5 +128,33 @@ class Application extends Model
     public function statusLabel(): string
     {
         return ucfirst(str_replace('_', ' ', $this->status));
+    }
+
+    public function allowedNextStatuses(): array
+    {
+        return self::TRANSITIONS[$this->status] ?? [];
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return $status === $this->status || in_array($status, $this->allowedNextStatuses(), true);
+    }
+
+    public function isResponseOverdue(): bool
+    {
+        return ! $this->first_responded_at && $this->response_due_at?->isPast();
+    }
+
+    public function isFinalized(): bool
+    {
+        return $this->finalized_at !== null;
+    }
+
+    public function resolutionLabel(): ?string
+    {
+        return match ($this->resolution) {
+            'hired' => 'Diterima', 'rejected' => 'Ditolak', 'position_closed' => 'Posisi ditutup',
+            'position_cancelled' => 'Posisi dibatalkan', 'withdrawn' => 'Ditarik kandidat', default => null,
+        };
     }
 }

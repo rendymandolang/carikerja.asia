@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\JobPost;
+use App\Services\HiringGuardrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AdminJobPostController extends Controller
 {
@@ -77,6 +79,7 @@ class AdminJobPostController extends Controller
         }
 
         $job = JobPost::create($validated);
+        app(HiringGuardrailService::class)->initializePublishedJob($job);
 
         return redirect()
             ->route('admin.jobs.show', $job)
@@ -119,7 +122,16 @@ class AdminJobPostController extends Controller
             $validated['published_at'] = $job->published_at;
         }
 
+        $wasPublished = $job->status === 'published';
+        if ($wasPublished && in_array($validated['status'], ['draft', 'archived'], true)) {
+            throw ValidationException::withMessages(['status' => 'Lowongan terbit harus ditutup dengan alasan agar semua kandidat menerima kepastian.']);
+        }
         $job->update($validated);
+        if ($validated['status'] === 'published') {
+            app(HiringGuardrailService::class)->initializePublishedJob($job);
+        } elseif ($wasPublished && $validated['status'] === 'closed') {
+            app(HiringGuardrailService::class)->closeJob($job, $validated['closure_type'], $validated['closed_reason']);
+        }
 
         return redirect()
             ->route('admin.jobs.show', $job)
@@ -167,6 +179,8 @@ class AdminJobPostController extends Controller
 
             'application_deadline' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['draft', 'published', 'closed', 'archived'])],
+            'closure_type' => ['nullable', Rule::requiredIf($request->input('status') === 'closed'), Rule::in(['filled', 'cancelled', 'other'])],
+            'closed_reason' => ['nullable', Rule::requiredIf($request->input('status') === 'closed'), 'string', 'max:2000'],
         ]);
     }
 
@@ -181,7 +195,7 @@ class AdminJobPostController extends Controller
                 ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

@@ -31,6 +31,8 @@ class JobPost extends Model
         'application_deadline',
         'status',
         'published_at',
+        'last_confirmed_at', 'confirmation_due_at', 'auto_paused_at', 'closed_at',
+        'closure_type', 'closed_reason', 'report_count',
     ];
 
     protected $casts = [
@@ -38,6 +40,8 @@ class JobPost extends Model
         'salary_max' => 'decimal:2',
         'application_deadline' => 'date',
         'published_at' => 'datetime',
+        'last_confirmed_at' => 'datetime', 'confirmation_due_at' => 'datetime',
+        'auto_paused_at' => 'datetime', 'closed_at' => 'datetime',
     ];
 
     public function company()
@@ -53,6 +57,11 @@ class JobPost extends Model
     public function applications()
     {
         return $this->hasMany(Application::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(JobReport::class);
     }
 
     public function scopePublished(Builder $query): Builder
@@ -77,9 +86,14 @@ class JobPost extends Model
 
     public function isOpenForApplication(): bool
     {
-        return $this->application_deadline === null
+        return ! $this->confirmation_due_at?->isPast() && ($this->application_deadline === null
             || $this->application_deadline->isToday()
-            || $this->application_deadline->isFuture();
+            || $this->application_deadline->isFuture());
+    }
+
+    public function isConfirmationOverdue(): bool
+    {
+        return $this->confirmation_due_at?->isPast() ?? false;
     }
 
     public function salaryRangeLabel(): string

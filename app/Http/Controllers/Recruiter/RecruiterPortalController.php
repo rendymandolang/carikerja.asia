@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\JobPost;
 use App\Notifications\ApplicationStatusUpdatedNotification;
+use App\Services\HiringGuardrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class RecruiterPortalController extends Controller
@@ -53,6 +55,8 @@ class RecruiterPortalController extends Controller
             'totalApplications' => Application::whereIn('company_id', $companyIds)->count(),
             'newApplications' => (int) ($statusCounts['submitted'] ?? 0),
             'interviewApplications' => (int) ($statusCounts['interview'] ?? 0),
+            'overdueApplications' => Application::whereIn('company_id', $companyIds)->whereNull('first_responded_at')->whereNull('finalized_at')->where('response_due_at', '<=', now())->count(),
+            'jobsDueConfirmation' => JobPost::whereIn('company_id', $companyIds)->where('status', 'published')->where('confirmation_due_at', '<=', now()->addDays(7))->count(),
             'recentApplications' => $recentApplications,
         ]);
     }
@@ -114,6 +118,7 @@ class RecruiterPortalController extends Controller
         }
 
         $job = JobPost::create($validated);
+        app(HiringGuardrailService::class)->initializePublishedJob($job);
 
         return redirect()
             ->route('recruiter.jobs.show', $job)
@@ -166,7 +171,16 @@ class RecruiterPortalController extends Controller
             $validated['published_at'] = $jobPost->published_at;
         }
 
+        $wasPublished = $jobPost->status === 'published';
+        if ($wasPublished && in_array($validated['status'], ['draft', 'archived'], true)) {
+            throw ValidationException::withMessages(['status' => 'Lowongan yang sudah dipublikasikan harus ditutup dengan alasan, bukan dikembalikan langsung ke draft/arsip.']);
+        }
         $jobPost->update($validated);
+        if ($validated['status'] === 'published') {
+            app(HiringGuardrailService::class)->initializePublishedJob($jobPost);
+        } elseif ($wasPublished && $validated['status'] === 'closed') {
+            app(HiringGuardrailService::class)->closeJob($jobPost, $validated['closure_type'], $validated['closed_reason']);
+        }
 
         return redirect()
             ->route('recruiter.jobs.show', $jobPost)
@@ -232,7 +246,7 @@ class RecruiterPortalController extends Controller
 
         return view('recruiter.applications.show', [
             'application' => $application,
-            'statuses' => Application::STATUSES,
+            'statuses' => array_values(array_unique(array_merge([$application->status], $application->allowedNextStatuses()))),
             'googleWorkspace' => Auth::user()->googleWorkspace,
         ]);
     }
@@ -244,13 +258,15 @@ class RecruiterPortalController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(Application::STATUSES)],
             'current_stage' => ['nullable', 'string', 'max:255'],
-            'status_note' => ['nullable', 'string', 'max:2000'],
+            'status_note' => ['nullable', 'string', 'max:2000', Rule::requiredIf(fn () => in_array($request->input('status'), ['hired', 'rejected', 'withdrawn'], true))],
         ]);
 
         $oldStatus = $application->status;
         $newStatus = $validated['status'];
         $statusChanged = $oldStatus !== $newStatus;
         $hasStatusNote = filled($validated['status_note'] ?? null);
+
+        app(HiringGuardrailService::class)->assertTransition($application, $newStatus);
 
         $application->fill([
             'status' => $newStatus,
@@ -264,6 +280,11 @@ class RecruiterPortalController extends Controller
         }
 
         $application->save();
+        app(HiringGuardrailService::class)->markRecruiterResponse($application);
+
+        if ($statusChanged && in_array($newStatus, ['hired', 'rejected', 'withdrawn'], true)) {
+            app(HiringGuardrailService::class)->finalize($application, $newStatus, $validated['status_note']);
+        }
 
         if ($statusChanged || $hasStatusNote) {
             $application->statusHistories()->create([
@@ -275,7 +296,7 @@ class RecruiterPortalController extends Controller
             ]);
         }
 
-        if ($statusChanged) {
+        if ($statusChanged && ! in_array($newStatus, ['hired', 'rejected', 'withdrawn'], true)) {
             $this->notifyCandidateStatusChange($application, $oldStatus, $validated['status_note'] ?? null);
         }
 
@@ -361,7 +382,18 @@ class RecruiterPortalController extends Controller
 
             'application_deadline' => ['nullable', 'date'],
             'status' => ['required', Rule::in(self::JOB_STATUSES)],
+            'closure_type' => ['nullable', Rule::requiredIf($request->input('status') === 'closed'), Rule::in(['filled', 'cancelled', 'other'])],
+            'closed_reason' => ['nullable', Rule::requiredIf($request->input('status') === 'closed'), 'string', 'max:2000'],
         ]);
+    }
+
+    public function confirmJob(JobPost $jobPost)
+    {
+        $this->ensureJobAccess($jobPost);
+        abort_unless($jobPost->status === 'published' || ($jobPost->status === 'closed' && $jobPost->closure_type === 'inactive'), 422);
+        app(HiringGuardrailService::class)->confirmJob($jobPost);
+
+        return back()->with('success', 'Lowongan dikonfirmasi aktif untuk '.config('hiring.job_confirmation_days', 30).' hari berikutnya.');
     }
 
     private function generateUniqueSlug(string $title, ?int $ignoreId = null): string
@@ -375,7 +407,7 @@ class RecruiterPortalController extends Controller
                 ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

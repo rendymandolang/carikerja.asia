@@ -8,6 +8,7 @@ use App\Models\ApplicationInterview;
 use App\Models\RecruiterGoogleWorkspace;
 use App\Notifications\InterviewScheduledNotification;
 use App\Services\GoogleCalendarService;
+use App\Services\HiringGuardrailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,10 +55,11 @@ class ApplicationInterviewController extends Controller
         }
 
         $application->loadMissing(['candidateProfile.user', 'jobPost', 'company.recruiters']);
+        app(HiringGuardrailService::class)->assertTransition($application, 'interview');
 
         $interview = DB::transaction(function () use ($application, $validated, $scheduledAt, $googleWorkspace, $shouldCreateGoogleMeet) {
             $oldStatus = $application->status;
-            $title = $validated['title'] ?: 'Interview - ' . ($application->jobPost?->title ?: 'Application');
+            $title = $validated['title'] ?: 'Interview - '.($application->jobPost?->title ?: 'Application');
 
             $interview = $application->interviews()->create([
                 'candidate_profile_id' => $application->candidate_profile_id,
@@ -92,7 +94,7 @@ class ApplicationInterviewController extends Controller
             $application->statusHistories()->create([
                 'from_status' => $oldStatus,
                 'to_status' => 'interview',
-                'notes' => 'Interview dijadwalkan: ' . $interview->scheduledAtLabel(),
+                'notes' => 'Interview dijadwalkan: '.$interview->scheduledAtLabel(),
                 'changed_by_user_id' => Auth::id(),
                 'changed_at' => now(),
             ]);
@@ -105,6 +107,7 @@ class ApplicationInterviewController extends Controller
         }
 
         $this->notifyInterviewScheduled($interview);
+        app(HiringGuardrailService::class)->markRecruiterResponse($application->fresh());
 
         $redirect = redirect()
             ->route('recruiter.applications.show', $application)
