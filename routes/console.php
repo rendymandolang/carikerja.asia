@@ -2,6 +2,7 @@
 
 use App\Models\SystemHeartbeat;
 use App\Services\BackupService;
+use App\Services\HiringGuardrailService;
 use App\Services\MailServerReadinessService;
 use App\Services\MarketingCampaignService;
 use Illuminate\Foundation\Inspiring;
@@ -45,7 +46,7 @@ Artisan::command('ops:backup-prune {--days=}', function () {
 Artisan::command('ops:mail-diagnostics', function () {
     $snapshot = app(MailServerReadinessService::class)->snapshot();
 
-    $this->info('Mail readiness: ' . $snapshot['summary']['overall']);
+    $this->info('Mail readiness: '.$snapshot['summary']['overall']);
 
     foreach ($snapshot['checks'] as $check) {
         $this->line("[{$check['status']}] {$check['label']}: {$check['message']}");
@@ -58,8 +59,14 @@ Artisan::command('marketing:send-due', function () {
     $this->info("Queued {$queued} scheduled marketing campaign(s).");
 })->purpose('Queue scheduled marketing campaigns that are due.');
 
+Artisan::command('hiring:enforce-guardrails', function () {
+    $counts = app(HiringGuardrailService::class)->enforce();
+    $this->info('Hiring guardrails: '.collect($counts)->map(fn ($value, $key) => "{$key}={$value}")->implode(', '));
+})->purpose('Enforce response deadlines and job confirmation rules.');
+
 Schedule::command('ops:heartbeat scheduler')->everyMinute()->withoutOverlapping(5);
 Schedule::command('marketing:send-due')->everyMinute()->withoutOverlapping(5);
+Schedule::command('hiring:enforce-guardrails')->everyFifteenMinutes()->withoutOverlapping(10);
 Schedule::command('queue:work --stop-when-empty --queue=default --max-jobs=50 --max-time=55')->everyMinute()->withoutOverlapping(5);
 Schedule::command('ops:backup --type=full')->dailyAt('02:15')->withoutOverlapping(60);
-Schedule::command('ops:backup-prune --days=' . config('operations.backup.retention_days', 7))->dailyAt('03:00')->withoutOverlapping(60);
+Schedule::command('ops:backup-prune --days='.config('operations.backup.retention_days', 7))->dailyAt('03:00')->withoutOverlapping(60);

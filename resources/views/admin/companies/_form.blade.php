@@ -69,6 +69,14 @@
         <textarea name="notes" rows="4" class="form-control">{{ old('notes', $company->notes) }}</textarea>
         @error('notes') <div class="text-danger small">{{ $message }}</div> @enderror
     </div>
+
+    <div class="col-md-12">
+        <div class="form-check">
+            <input type="hidden" name="is_verified" value="0">
+            <input class="form-check-input" type="checkbox" name="is_verified" value="1" id="is_verified" @checked(old('is_verified', $company->is_verified))>
+            <label class="form-check-label" for="is_verified"><strong>Perusahaan terverifikasi</strong> — aktifkan hanya setelah legalitas dan identitas recruiter diperiksa.</label>
+        </div>
+    </div>
 </div>
 
 <div class="mt-4 d-flex gap-2">

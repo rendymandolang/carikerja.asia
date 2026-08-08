@@ -23,6 +23,13 @@ class Company extends Model
         'province',
         'status',
         'notes',
+        'is_verified', 'verified_at', 'verified_by_user_id', 'last_recruiter_activity_at',
+        'response_rate', 'median_response_hours', 'response_sample_size',
+    ];
+
+    protected $casts = [
+        'is_verified' => 'boolean', 'verified_at' => 'datetime', 'last_recruiter_activity_at' => 'datetime',
+        'response_rate' => 'decimal:2', 'median_response_hours' => 'decimal:2',
     ];
 
     public function sourceWaitlist()
@@ -67,4 +74,15 @@ class Company extends Model
         return $this->hasMany(ApplicationMessage::class);
     }
 
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by_user_id');
+    }
+
+    public function isActiveResponder(): bool
+    {
+        return $this->response_sample_size > 0
+            && (float) $this->response_rate >= (float) config('hiring.active_responder_rate', 80)
+            && ($this->last_recruiter_activity_at?->gte(now()->subDays((int) config('hiring.active_responder_days', 14))) ?? false);
+    }
 }

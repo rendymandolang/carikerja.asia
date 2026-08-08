@@ -18,6 +18,24 @@
     </div>
 </div>
 
+@if ($overdueApplications || $jobsDueConfirmation)
+    <div class="alert alert-warning d-flex flex-wrap justify-content-between gap-2">
+        <span><strong>Hire tanpa ghosting:</strong> {{ $overdueApplications }} lamaran terlambat direspons dan {{ $jobsDueConfirmation }} lowongan perlu dikonfirmasi dalam 7 hari.</span>
+        <a href="{{ route('recruiter.applications.index') }}" class="alert-link">Tindak lanjuti sekarang</a>
+    </div>
+@endif
+
+@if ($companies->isNotEmpty())
+    <div class="row g-3 mb-4">
+        @foreach ($companies as $company)
+            <div class="col-md-6"><div class="card portal-card"><div class="card-body">
+                <div class="d-flex justify-content-between"><strong>{{ $company->company_name }}</strong><div>@if($company->is_verified)<span class="badge bg-success">Terverifikasi</span>@endif @if($company->isActiveResponder())<span class="badge bg-info text-dark">Aktif merespons</span>@endif</div></div>
+                <div class="text-muted mt-2">Response rate {{ $company->response_sample_size ? number_format((float) $company->response_rate, 0).'%' : 'belum ada data' }} · median {{ $company->median_response_hours !== null ? number_format((float) $company->median_response_hours, 1).' jam' : '-' }}</div>
+            </div></div></div>
+        @endforeach
+    </div>
+@endif
+
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card portal-card">

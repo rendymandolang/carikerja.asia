@@ -105,6 +105,22 @@
         @error('application_deadline') <div class="text-danger small">{{ $message }}</div> @enderror
     </div>
 
+    <div class="col-md-4">
+        <label class="form-label">Alasan Penutupan</label>
+        <select name="closure_type" class="form-select">
+            <option value="">Pilih jika status Closed</option>
+            <option value="filled" @selected(old('closure_type', $job->closure_type) === 'filled')>Posisi sudah terisi</option>
+            <option value="cancelled" @selected(old('closure_type', $job->closure_type) === 'cancelled')>Posisi dibatalkan</option>
+            <option value="other" @selected(old('closure_type', $job->closure_type) === 'other')>Alasan lain</option>
+        </select>
+        @error('closure_type') <div class="text-danger small">{{ $message }}</div> @enderror
+    </div>
+    <div class="col-md-8">
+        <label class="form-label">Penjelasan Penutupan</label>
+        <input name="closed_reason" class="form-control" value="{{ old('closed_reason', $job->closed_reason) }}" placeholder="Wajib jika status Closed; kandidat akan menerima alasan ini.">
+        @error('closed_reason') <div class="text-danger small">{{ $message }}</div> @enderror
+    </div>
+
     <div class="col-md-12">
         <label class="form-label">Job Description <span class="text-danger">*</span></label>
         <textarea name="description" rows="7" class="form-control" required>{{ old('description', $job->description) }}</textarea>

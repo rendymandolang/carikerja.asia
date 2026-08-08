@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\ApplicationMessage;
 use App\Notifications\ApplicationMessageReceivedNotification;
+use App\Services\HiringGuardrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +32,8 @@ class ApplicationMessageController extends Controller
             'body' => trim($validated['body']),
             'read_by_recruiter_at' => now(),
         ]);
+
+        app(HiringGuardrailService::class)->markRecruiterResponse($application);
 
         $this->notifyCandidate($message);
 

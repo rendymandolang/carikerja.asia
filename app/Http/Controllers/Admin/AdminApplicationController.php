@@ -7,6 +7,7 @@ use App\Models\Application;
 use App\Models\Company;
 use App\Models\JobPost;
 use App\Notifications\ApplicationStatusUpdatedNotification;
+use App\Services\HiringGuardrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -74,12 +75,13 @@ class AdminApplicationController extends Controller
             'status' => ['required', Rule::in(Application::STATUSES)],
             'current_stage' => ['nullable', 'string', 'max:255'],
             'admin_notes' => ['nullable', 'string', 'max:5000'],
-            'status_note' => ['nullable', 'string', 'max:2000'],
+            'status_note' => ['nullable', 'string', 'max:2000', Rule::requiredIf(fn () => in_array($request->input('status'), ['hired', 'rejected', 'withdrawn'], true))],
         ]);
 
         $oldStatus = $application->status;
         $newStatus = $validated['status'];
         $statusChanged = $oldStatus !== $newStatus;
+        app(HiringGuardrailService::class)->assertTransition($application, $newStatus, true);
 
         $application->fill([
             'status' => $newStatus,
@@ -95,6 +97,10 @@ class AdminApplicationController extends Controller
 
         $application->save();
 
+        if ($statusChanged && in_array($newStatus, ['hired', 'rejected', 'withdrawn'], true)) {
+            app(HiringGuardrailService::class)->finalize($application, $newStatus, $validated['status_note']);
+        }
+
         if ($statusChanged) {
             $application->statusHistories()->create([
                 'from_status' => $oldStatus,
@@ -104,7 +110,9 @@ class AdminApplicationController extends Controller
                 'changed_at' => now(),
             ]);
 
-            $this->notifyCandidateStatusChange($application, $oldStatus, $validated['status_note'] ?? null);
+            if (! in_array($newStatus, ['hired', 'rejected', 'withdrawn'], true)) {
+                $this->notifyCandidateStatusChange($application, $oldStatus, $validated['status_note'] ?? null);
+            }
         }
 
         return redirect()

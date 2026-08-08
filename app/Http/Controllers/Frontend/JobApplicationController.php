@@ -9,14 +9,15 @@ use App\Models\JobPost;
 use App\Models\User;
 use App\Notifications\ApplicationSubmittedNotification;
 use App\Notifications\NewApplicationReceivedNotification;
+use App\Services\HiringGuardrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class JobApplicationController extends Controller
@@ -151,6 +152,7 @@ class JobApplicationController extends Controller
         });
 
         if ($result['is_new']) {
+            app(HiringGuardrailService::class)->initializeApplication($result['application']);
             $this->sendApplicationNotifications($result['application'], $result['user']);
         }
 

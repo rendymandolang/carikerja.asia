@@ -72,6 +72,10 @@
                 <p class="lead text-white-50 mb-0">
                     {{ $job->company?->company_name ?: 'Company confidential' }}
                 </p>
+                <div class="mt-3 d-flex gap-2 flex-wrap">
+                    @if ($job->company?->is_verified)<span class="badge bg-success">Perusahaan terverifikasi</span>@endif
+                    @if ($job->company?->isActiveResponder())<span class="badge bg-info text-dark">Aktif merespons</span>@endif
+                </div>
             </div>
 
             <div class="col-lg-4">
@@ -135,6 +139,9 @@
                     <div class="mb-3">
                         <div class="text-muted small">Company</div>
                         <div class="fw-bold">{{ $job->company?->company_name ?: '-' }}</div>
+                        @if ($job->company?->response_sample_size)
+                            <div class="small text-muted">Response rate {{ number_format((float) $job->company->response_rate, 0) }}% | median {{ number_format((float) $job->company->median_response_hours, 1) }} jam</div>
+                        @endif
                     </div>
 
                     <div class="mb-3">
@@ -191,6 +198,22 @@
                     </div>
                 </div>
             @endif
+
+            <div class="card content-card mt-4">
+                <div class="card-body p-4">
+                    <h6>Lowongan tidak aktif atau mencurigakan?</h6>
+                    <p class="text-muted small">Laporkan agar tim carikerja.asia dapat meninjaunya.</p>
+                    <form method="POST" action="{{ route('jobs.report', $job) }}">@csrf
+                        <select name="reason" class="form-select form-select-sm mb-2" required>
+                            <option value="inactive">Sudah tidak aktif</option><option value="suspicious">Mencurigakan / palsu</option>
+                            <option value="misleading">Informasi menyesatkan</option><option value="duplicate">Duplikat</option><option value="other">Lainnya</option>
+                        </select>
+                        <textarea name="details" class="form-control form-control-sm mb-2" rows="3" maxlength="2000" placeholder="Jelaskan singkat (opsional)"></textarea>
+                        <input type="email" name="reporter_email" class="form-control form-control-sm mb-2" placeholder="Email untuk tindak lanjut (opsional)">
+                        <button class="btn btn-sm btn-outline-danger">Laporkan Lowongan</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </main>

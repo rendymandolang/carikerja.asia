@@ -171,6 +171,22 @@
                     <dt class="col-sm-4">Last Status Change</dt>
                     <dd class="col-sm-8">{{ $application->last_status_changed_at ? $application->last_status_changed_at->format('d M Y H:i') : '-' }}</dd>
 
+                    <dt class="col-sm-4">Batas Respons Pertama</dt>
+                    <dd class="col-sm-8">
+                        @if ($application->first_responded_at)
+                            <span class="badge bg-success">Direspons {{ $application->first_responded_at->format('d M Y H:i') }}</span>
+                        @elseif ($application->isResponseOverdue())
+                            <span class="badge bg-danger">Terlambat sejak {{ $application->response_due_at->format('d M Y H:i') }}</span>
+                        @else
+                            {{ $application->response_due_at?->format('d M Y H:i') ?: '-' }}
+                        @endif
+                    </dd>
+
+                    @if ($application->isFinalized())
+                        <dt class="col-sm-4">Hasil Akhir</dt>
+                        <dd class="col-sm-8"><strong>{{ $application->resolutionLabel() }}</strong><div class="text-muted">{{ $application->final_reason }}</div></dd>
+                    @endif
+
                     <dt class="col-sm-4">Reviewed By</dt>
                     <dd class="col-sm-8">{{ $application->reviewedBy?->name ?: '-' }}</dd>
                 </dl>
@@ -441,6 +457,8 @@
                     <div class="mb-3">
                         <label class="form-label">Status Note</label>
                         <textarea name="status_note" rows="4" class="form-control" placeholder="Catatan untuk perubahan status ini">{{ old('status_note') }}</textarea>
+                        <div class="form-text">Wajib diisi untuk diterima, ditolak, atau ditarik. Kandidat akan melihat alasan ini.</div>
+                        @error('status_note') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
 
                     <button class="btn btn-primary w-100">Update Application</button>
